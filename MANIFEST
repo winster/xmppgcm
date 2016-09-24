@@ -2,3 +2,4 @@
 setup.cfg
 setup.py
 sleekxmppgcm\__init__.py
+sleekxmppgcm\gcm.py
