@@ -103,7 +103,7 @@ class GCM(ClientXMPP):
                 self.connecton_draining = True
 
         elif data.message_type == GCMMessageType.RECEIPT:
-            logging.debug('Received Receipts for message_id: %s' % msg.message_id)
+            logging.debug('Received Receipts for message_id: %s' % data.message_id)
             self.event(XMPPEvent.RECEIPT, data)
 
         else:
