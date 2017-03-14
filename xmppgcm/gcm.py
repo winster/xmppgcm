@@ -61,6 +61,10 @@ class GCMMessage(ElementBase):
     def message_type(self):
         return self.data.get('message_type', '')
 
+    @property
+    def control_type(self):
+        return self.data.get('control_type', '')
+
 
 class GCM(ClientXMPP):
 
@@ -98,7 +102,7 @@ class GCM(ClientXMPP):
                 del self.ACKS[data.message_id]
 
         elif data.message_type == GCMMessageType.CONTROL:
-            logging.debug('Received Control for message_id: %s' % data.control_type)
+            logging.debug('Received Control: %s' % data.control_type)
             if data.control_type == 'CONNECTION_DRAINING':
                 self.connecton_draining = True
 
