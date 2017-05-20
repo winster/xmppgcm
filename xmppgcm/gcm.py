@@ -7,6 +7,7 @@ from sleekxmpp.xmlstream.handler import Callback
 from sleekxmpp.xmlstream.matcher import StanzaPath
 import uuid,json,random,string
 
+log = logging.getLogger('GCM_XMPP')
 
 class GCMMessageType(object):
     ACK = 'ack'
@@ -86,28 +87,28 @@ class GCM(ClientXMPP):
         self.add_event_handler('disconnected', self.on_disconnected)
 
     def on_gcm_message(self, msg):
-        logging.debug('inside on_gcm_message {0}'.format(msg))
+        log.debug('inside on_gcm_message {0}'.format(msg))
         data = msg['gcm']
-        logging.debug('Msg: {0}'.format(data))
+        log.debug('Msg: {0}'.format(data))
         if data.message_type == GCMMessageType.NACK:
-            logging.debug('Received NACK for message_id: %s with error, %s' % (data.message_id, data.error_description))
+            log.debug('Received NACK for message_id: %s with error, %s' % (data.message_id, data.error_description))
             if data.message_id in self.ACKS:
                 self.ACKS[data.message_id](data.error_description, data.message_id, data['from'])
                 del self.ACKS[data.message_id]
 
         elif data.message_type == GCMMessageType.ACK:
-            logging.debug('Received ACK for message_id: %s' % data.message_id)
+            log.debug('Received ACK for message_id: %s' % data.message_id)
             if data.message_id in self.ACKS:
                 self.ACKS[data.message_id](None, data.message_id, data['from'])
                 del self.ACKS[data.message_id]
 
         elif data.message_type == GCMMessageType.CONTROL:
-            logging.debug('Received Control: %s' % data.control_type)
+            log.debug('Received Control: %s' % data.control_type)
             if data.control_type == 'CONNECTION_DRAINING':
                 self.connecton_draining = True
 
         elif data.message_type == GCMMessageType.RECEIPT:
-            logging.debug('Received Receipts for message_id: %s' % data.message_id)
+            log.debug('Received Receipts for message_id: %s' % data.message_id)
             self.event(XMPPEvent.RECEIPT, data)
 
         else:
@@ -120,7 +121,7 @@ class GCM(ClientXMPP):
             self.event(XMPPEvent.MESSAGE, data)
 
     def session_start(self, event):
-        logging.debug("session started")
+        log.debug("session started")
 
         if self.connecton_draining == True:
             self.connecton_draining = False
@@ -131,7 +132,7 @@ class GCM(ClientXMPP):
         self.event(XMPPEvent.CONNECTED, len(self.QUEUE))
 
     def on_disconnected(self, event):
-        logging.debug("Disconnected")
+        log.debug("Disconnected")
         self.event(XMPPEvent.DISCONNECTED, self.connecton_draining)
 
     def send_gcm(self, to, data, options, cb):
