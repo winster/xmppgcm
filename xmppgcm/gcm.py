@@ -93,13 +93,13 @@ class GCM(ClientXMPP):
         if data.message_type == GCMMessageType.NACK:
             log.debug('Received NACK for message_id: %s with error, %s' % (data.message_id, data.error_description))
             if data.message_id in self.ACKS:
-                self.ACKS[data.message_id](data.error_description, data.message_id, data['from'])
+                self.ACKS[data.message_id](data.error_description, data)
                 del self.ACKS[data.message_id]
 
         elif data.message_type == GCMMessageType.ACK:
             log.debug('Received ACK for message_id: %s' % data.message_id)
             if data.message_id in self.ACKS:
-                self.ACKS[data.message_id](None, data.message_id, data['from'])
+                self.ACKS[data.message_id](None, data)
                 del self.ACKS[data.message_id]
 
         elif data.message_type == GCMMessageType.CONTROL:
@@ -114,9 +114,9 @@ class GCM(ClientXMPP):
         else:
             if data['from']:
                 self.send_gcm({
-                                to: data['from'],
-                                message_id: data.message_id,
-                                message_type: 'ack'
+                                'to': data['from'],
+                                'message_id': data.message_id,
+                                'message_type': 'ack',
                             })
             self.event(XMPPEvent.MESSAGE, data)
 
@@ -135,12 +135,14 @@ class GCM(ClientXMPP):
         log.debug("Disconnected")
         self.event(XMPPEvent.DISCONNECTED, self.connecton_draining)
 
-    def send_gcm(self, to, data, options, cb):
+    def send_gcm(self, to, data, options, cb, ttl=60):
         message_id = self.random_id()
         payload = {
             'to': to,
             'message_id': message_id,
-            'data': data
+            'data': data,
+            'time_to_live': int(ttl),
+            'delivery_receipt_requested': True
         }
 
         if options:
