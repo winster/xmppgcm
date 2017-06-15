@@ -155,7 +155,9 @@ class GCM(ClientXMPP):
         else:
             self.send_raw(self.MSG.format(json.dumps(payload)))
 
+        return message_id
+
     def random_id(self):
         rid = ''
-        for x in range(8): rid += random.choice(string.ascii_letters + string.digits)
+        for x in range(24): rid += random.choice(string.ascii_letters + string.digits)
         return rid
