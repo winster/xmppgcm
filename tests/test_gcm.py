@@ -214,6 +214,14 @@ class TestGCM(unittest.TestCase):
         anid = gcm.random_id()
         self.assertEquals(len(anid), 8)
 
+    def test_connection_draining_property(self):
+        gcm = GCM('a', 'b')
+        self.assertFalse(gcm.connecton_draining)
+        self.assertFalse(gcm.connection_draining)
+        gcm.connection_draining = True
+        self.assertTrue(gcm.connecton_draining)
+        self.assertTrue(gcm.connection_draining)
+
 
 
 if __name__ == '__main__':
