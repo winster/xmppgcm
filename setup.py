@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
   name = 'xmppgcm',
   packages = ['xmppgcm'], # this must be the same as the name above
-  version = '0.2.1',
+  version = '0.2.2',
   description = 'Client Library for Firebase Cloud Messaging using XMPP',
   install_requires=['sleekxmpp',],
   author = 'Winster Jose',
