@@ -86,6 +86,18 @@ class GCM(ClientXMPP):
         self.add_event_handler('session_start', self.session_start)
         self.add_event_handler('disconnected', self.on_disconnected)
 
+    @property
+    def connection_draining(self):
+        """ This is a fix to the mispelling connecton_draining,
+        "i" is missing, but this is for not breaking the already
+        working implementations of the module. """
+
+        return self.connecton_draining
+
+    @connection_draining.setter
+    def connection_draining(self, value):
+        self.connecton_draining = value
+
     def on_gcm_message(self, msg):
         log.debug('inside on_gcm_message {0}'.format(msg))
         data = msg['gcm']
