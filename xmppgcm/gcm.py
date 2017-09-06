@@ -7,6 +7,7 @@ from sleekxmpp.xmlstream.handler import Callback
 from sleekxmpp.xmlstream.matcher import StanzaPath
 import uuid,json,random,string
 
+log = logging.getLogger('GCM_XMPP')
 
 class GCMMessageType(object):
     ACK = 'ack'
@@ -98,41 +99,41 @@ class GCM(ClientXMPP):
         self.connecton_draining = value
 
     def on_gcm_message(self, msg):
-        logging.debug('inside on_gcm_message {0}'.format(msg))
+        log.debug('inside on_gcm_message {0}'.format(msg))
         data = msg['gcm']
-        logging.debug('Msg: {0}'.format(data))
+        log.debug('Msg: {0}'.format(data))
         if data.message_type == GCMMessageType.NACK:
-            logging.debug('Received NACK for message_id: %s with error, %s' % (data.message_id, data.error_description))
+            log.debug('Received NACK for message_id: %s with error, %s' % (data.message_id, data.error_description))
             if data.message_id in self.ACKS:
-                self.ACKS[data.message_id](data.error_description, data.message_id, data['from'])
+                self.ACKS[data.message_id](data.error_description, data)
                 del self.ACKS[data.message_id]
 
         elif data.message_type == GCMMessageType.ACK:
-            logging.debug('Received ACK for message_id: %s' % data.message_id)
+            log.debug('Received ACK for message_id: %s' % data.message_id)
             if data.message_id in self.ACKS:
-                self.ACKS[data.message_id](None, data.message_id, data['from'])
+                self.ACKS[data.message_id](None, data)
                 del self.ACKS[data.message_id]
 
         elif data.message_type == GCMMessageType.CONTROL:
-            logging.debug('Received Control: %s' % data.control_type)
+            log.debug('Received Control: %s' % data.control_type)
             if data.control_type == 'CONNECTION_DRAINING':
                 self.connecton_draining = True
 
         elif data.message_type == GCMMessageType.RECEIPT:
-            logging.debug('Received Receipts for message_id: %s' % data.message_id)
+            log.debug('Received Receipts for message_id: %s' % data.message_id)
             self.event(XMPPEvent.RECEIPT, data)
 
         else:
             if data['from']:
                 self.send_gcm({
-                                to: data['from'],
-                                message_id: data.message_id,
-                                message_type: 'ack'
+                                'to': data['from'],
+                                'message_id': data.message_id,
+                                'message_type': 'ack',
                             })
             self.event(XMPPEvent.MESSAGE, data)
 
     def session_start(self, event):
-        logging.debug("session started")
+        log.debug("session started")
 
         if self.connecton_draining == True:
             self.connecton_draining = False
@@ -143,15 +144,17 @@ class GCM(ClientXMPP):
         self.event(XMPPEvent.CONNECTED, len(self.QUEUE))
 
     def on_disconnected(self, event):
-        logging.debug("Disconnected")
+        log.debug("Disconnected")
         self.event(XMPPEvent.DISCONNECTED, self.connecton_draining)
 
-    def send_gcm(self, to, data, options, cb):
+    def send_gcm(self, to, data, options, cb, ttl=60):
         message_id = self.random_id()
         payload = {
             'to': to,
             'message_id': message_id,
-            'data': data
+            'data': data,
+            'time_to_live': int(ttl),
+            'delivery_receipt_requested': True
         }
 
         if options:
@@ -166,7 +169,9 @@ class GCM(ClientXMPP):
         else:
             self.send_raw(self.MSG.format(json.dumps(payload)))
 
+        return message_id
+
     def random_id(self):
         rid = ''
-        for x in range(8): rid += random.choice(string.ascii_letters + string.digits)
+        for x in range(24): rid += random.choice(string.ascii_letters + string.digits)
         return rid
